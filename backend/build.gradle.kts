@@ -43,7 +43,6 @@ dependencies {
     // File readers
     implementation("org.apache.poi:poi-ooxml:5.2.5")
     implementation("org.apache.pdfbox:pdfbox:3.0.2")
-    implementation("org.yaml:snakeyaml:2.2")
     implementation("io.swagger.parser.v3:swagger-parser:2.1.21")
 
     // Local embeddings via DJL

@@ -46,8 +46,6 @@ class IngestServiceTest {
         svc.confirm("test.json", listOf("api"), "Tech")
 
         val status = svc.getStatus("test.json")
-        assertNotNull(status)
-        // Status is either PENDING or already PROCESSING (worker thread is fast)
-        assertTrue(status == IngestStatus.PENDING || status == IngestStatus.PROCESSING || status == IngestStatus.COMPLETE || status == IngestStatus.ERROR)
+        assertEquals(IngestStatus.PENDING, status)
     }
 }

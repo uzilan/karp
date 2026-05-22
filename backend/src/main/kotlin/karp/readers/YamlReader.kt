@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 import java.nio.file.Path
 
 @Component
-@Order(2)
+@Order(3)
 class YamlReader : BaseReader {
 
     private val yamlMapper = YAMLMapper.builder().build()
