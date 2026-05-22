@@ -1,7 +1,9 @@
 package karp.core
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import ai.djl.Application
+import ai.djl.inference.Predictor
+import ai.djl.repository.zoo.Criteria
+import ai.djl.repository.zoo.ZooModel
 import io.qdrant.client.QdrantClient
 import io.qdrant.client.grpc.Collections.Distance
 import io.qdrant.client.grpc.Collections.VectorParams
@@ -9,15 +11,11 @@ import io.qdrant.client.grpc.JsonWithInt
 import io.qdrant.client.grpc.Points.*
 import jakarta.annotation.PostConstruct
 import karp.config.KarpProperties
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import org.springframework.stereotype.Service
 import java.util.UUID
 
 private const val COLLECTION = "wiki"
-private const val DIMS = 512L
+private const val DIMS = 384L
 
 data class SearchResult(val pageName: String, val score: Float)
 
@@ -26,8 +24,19 @@ class EmbeddingService(
     private val qdrant: QdrantClient,
     private val props: KarpProperties
 ) {
-    private val http = OkHttpClient()
-    private val mapper = ObjectMapper().registerKotlinModule()
+    private val model: ZooModel<String, FloatArray>
+    private val predictor: Predictor<String, FloatArray>
+
+    init {
+        val criteria = Criteria.builder()
+            .optApplication(Application.NLP.TEXT_EMBEDDING)
+            .setTypes(String::class.java, FloatArray::class.java)
+            .optEngine("PyTorch")
+            .optModelUrls("djl://ai.djl.huggingface.pytorch/sentence-transformers/all-MiniLM-L6-v2")
+            .build()
+        model = criteria.loadModel()
+        predictor = model.newPredictor()
+    }
 
     @PostConstruct
     fun ensureCollection() {
@@ -47,26 +56,8 @@ class EmbeddingService(
         }
     }
 
-    fun embed(texts: List<String>): List<List<Float>> {
-        val body = mapper.writeValueAsString(mapOf(
-            "input" to texts,
-            "model" to "voyage-3-lite"
-        ))
-        val request = Request.Builder()
-            .url("https://api.voyageai.com/v1/embeddings")
-            .header("Authorization", "Bearer ${props.voyageApiKey}")
-            .post(body.toRequestBody("application/json".toMediaType()))
-            .build()
-
-        val responseBody = http.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) throw RuntimeException("Voyage AI error: ${response.code}")
-            response.body!!.string()
-        }
-        val json = mapper.readTree(responseBody)
-        return json["data"].map { item ->
-            item["embedding"].map { it.floatValue() }
-        }
-    }
+    fun embed(texts: List<String>): List<List<Float>> =
+        texts.map { predictor.predict(it).toList() }
 
     fun upsertPage(pageName: String, content: String, tags: List<String>, category: String) {
         val vector = embed(listOf(content)).first()
@@ -77,11 +68,7 @@ class EmbeddingService(
 
         val point = PointStruct.newBuilder()
             .setId(PointId.newBuilder().setUuid(uuid))
-            .setVectors(
-                Vectors.newBuilder().setVector(
-                    Vector.newBuilder().addAllData(vector)
-                )
-            )
+            .setVectors(Vectors.newBuilder().setVector(Vector.newBuilder().addAllData(vector)))
             .putPayload("name", strValue(pageName))
             .putPayload("tags", strValue(tags.joinToString(",")))
             .putPayload("category", strValue(category))
@@ -90,7 +77,12 @@ class EmbeddingService(
         qdrant.upsertAsync(COLLECTION, listOf(point)).get()
     }
 
-    fun search(query: String, topK: Int = props.topK, tags: List<String> = emptyList(), category: String? = null): List<SearchResult> {
+    fun search(
+        query: String,
+        topK: Int = props.topK,
+        tags: List<String> = emptyList(),
+        category: String? = null
+    ): List<SearchResult> {
         val vector = embed(listOf(query)).first()
 
         val searchBuilder = SearchPoints.newBuilder()
@@ -123,11 +115,6 @@ class EmbeddingService(
         }
 
         return qdrant.searchAsync(searchBuilder.build()).get()
-            .map { hit ->
-                SearchResult(
-                    pageName = hit.payloadMap["name"]?.stringValue ?: "",
-                    score = hit.score
-                )
-            }
+            .map { hit -> SearchResult(pageName = hit.payloadMap["name"]?.stringValue ?: "", score = hit.score) }
     }
 }

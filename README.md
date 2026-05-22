@@ -6,12 +6,11 @@ LLM-maintained personal knowledge base. Drop files in, Claude builds a structure
 
 - Docker Desktop
 - Anthropic API key (claude.ai/settings/keys)
-- Voyage AI API key (voyageai.com — free tier available)
 
 ## Getting Started
 
 1. Clone this repo
-2. Copy `.env.example` to `.env` and fill in your API keys
+2. Copy `.env.example` to `.env` and fill in your API key
 3. Run: `docker compose up -d`
 4. Open: http://localhost:8080
 

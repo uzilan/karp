@@ -14,7 +14,6 @@ data class KarpProperties(
     val sourcesDir: String = "/app/sources",
     val wikiDir: String = "/app/wiki",
     val anthropicApiKey: String = "",
-    val voyageApiKey: String = "",
     val qdrantHost: String = "localhost",
     val qdrantPort: Int = 6334,
     val topK: Int = 5

@@ -40,8 +40,12 @@ dependencies {
     implementation("org.yaml:snakeyaml:2.2")
     implementation("io.swagger.parser.v3:swagger-parser:2.1.21")
 
-    // HTTP client for Voyage AI
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    // Local embeddings via DJL
+    implementation("ai.djl:api:0.31.0")
+    implementation("ai.djl.huggingface:tokenizers:0.31.0")
+    runtimeOnly("ai.djl.pytorch:pytorch-engine:0.31.0")
+    runtimeOnly("ai.djl.pytorch:pytorch-jni:2.5.1-0.31.0")
+    runtimeOnly("ai.djl.pytorch:pytorch-native-cpu:2.5.1")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
