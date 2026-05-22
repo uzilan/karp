@@ -32,6 +32,7 @@ dependencies {
 
     // Qdrant
     implementation("io.qdrant:client:1.9.1")
+    implementation("com.google.protobuf:protobuf-java:3.24.0")
 
     // File readers
     implementation("org.apache.poi:poi-ooxml:5.2.5")
