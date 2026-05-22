@@ -10,7 +10,9 @@ import io.qdrant.client.grpc.Collections.VectorParams
 import io.qdrant.client.grpc.JsonWithInt
 import io.qdrant.client.grpc.Points.*
 import jakarta.annotation.PostConstruct
+import jakarta.annotation.PreDestroy
 import karp.config.KarpProperties
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -24,6 +26,8 @@ class EmbeddingService(
     private val qdrant: QdrantClient,
     private val props: KarpProperties
 ) {
+    private val log = LoggerFactory.getLogger(EmbeddingService::class.java)
+
     private val model: ZooModel<String, FloatArray>
     private val predictor: Predictor<String, FloatArray>
 
@@ -52,10 +56,17 @@ class EmbeddingService(
                 ).get()
             }
         } catch (e: Exception) {
-            println("Warning: Could not connect to Qdrant at startup: ${e.message}")
+            log.warn("Could not connect to Qdrant at startup: ${e.message}")
         }
     }
 
+    @PreDestroy
+    fun destroy() {
+        predictor.close()
+        model.close()
+    }
+
+    @Synchronized
     fun embed(texts: List<String>): List<List<Float>> =
         texts.map { predictor.predict(it).toList() }
 
@@ -84,37 +95,23 @@ class EmbeddingService(
         category: String? = null
     ): List<SearchResult> {
         val vector = embed(listOf(query)).first()
+        val fetchLimit = if (tags.isEmpty() && category == null) topK else topK * 5
 
-        val searchBuilder = SearchPoints.newBuilder()
+        val searchRequest = SearchPoints.newBuilder()
             .setCollectionName(COLLECTION)
             .addAllVector(vector)
-            .setLimit(topK.toLong())
+            .setLimit(fetchLimit.toLong())
             .setWithPayload(WithPayloadSelector.newBuilder().setEnable(true))
+            .build()
 
-        if (tags.isNotEmpty() || category != null) {
-            val conditions = mutableListOf<Condition>()
-            tags.forEach { tag ->
-                conditions.add(
-                    Condition.newBuilder().setField(
-                        FieldCondition.newBuilder()
-                            .setKey("tags")
-                            .setMatch(Match.newBuilder().setText(tag))
-                    ).build()
-                )
+        return qdrant.searchAsync(searchRequest).get()
+            .filter { hit ->
+                val storedTags = hit.payloadMap["tags"]?.stringValue?.split(",") ?: emptyList()
+                val storedCategory = hit.payloadMap["category"]?.stringValue ?: ""
+                (tags.isEmpty() || tags.any { it in storedTags }) &&
+                (category == null || storedCategory == category)
             }
-            category?.let {
-                conditions.add(
-                    Condition.newBuilder().setField(
-                        FieldCondition.newBuilder()
-                            .setKey("category")
-                            .setMatch(Match.newBuilder().setText(it))
-                    ).build()
-                )
-            }
-            searchBuilder.setFilter(Filter.newBuilder().addAllMust(conditions))
-        }
-
-        return qdrant.searchAsync(searchBuilder.build()).get()
             .map { hit -> SearchResult(pageName = hit.payloadMap["name"]?.stringValue ?: "", score = hit.score) }
+            .take(topK)
     }
 }
