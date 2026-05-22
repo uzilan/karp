@@ -7,7 +7,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Build backend
-FROM eclipse-temurin:21-jdk-alpine AS backend-build
+FROM eclipse-temurin:25-jdk-alpine AS backend-build
 WORKDIR /backend
 COPY backend/gradlew backend/settings.gradle.kts backend/build.gradle.kts backend/gradle.properties ./
 COPY backend/gradle/ gradle/
@@ -18,7 +18,7 @@ COPY --from=frontend-build /frontend/dist src/main/resources/static/
 RUN ./gradlew bootJar --no-daemon
 
 # Stage 3: Runtime
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 COPY --from=backend-build /backend/build/libs/*.jar app.jar
 RUN mkdir -p /app/sources/errors /app/wiki

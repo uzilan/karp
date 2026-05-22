@@ -3,9 +3,9 @@ package karp.core
 import com.anthropic.client.okhttp.AnthropicOkHttpClient
 import com.anthropic.models.messages.MessageCreateParams
 import com.anthropic.models.messages.Model
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.KotlinModule
+import tools.jackson.module.kotlin.readValue
 import karp.config.KarpProperties
 import karp.readers.ReadResult
 import org.springframework.stereotype.Service
@@ -25,7 +25,9 @@ class LlmService(
         .apiKey(props.anthropicApiKey)
         .build()
 
-    private val mapper = ObjectMapper().registerKotlinModule()
+    private val mapper = JsonMapper.builder()
+        .addModule(KotlinModule.Builder().build())
+        .build()
 
     private val schema: String by lazy {
         Path.of("schema.md").let { if (it.toFile().exists()) it.toFile().readText() else "" }

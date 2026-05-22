@@ -1,31 +1,37 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
-    id("org.springframework.boot") version "3.2.5"
-    id("io.spring.dependency-management") version "1.1.4"
-    kotlin("jvm") version "2.1.20"
-    kotlin("plugin.spring") version "2.1.20"
+    id("org.springframework.boot") version "4.1.0-RC1"
+    id("io.spring.dependency-management") version "1.1.7"
+    kotlin("jvm") version "2.3.20"
+    kotlin("plugin.spring") version "2.3.20"
 }
 
 group = "karp"
 version = "0.0.1-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_21
+
+kotlin {
+    jvmToolchain(25)
+    compilerOptions {
+        freeCompilerArgs.add("-Xjsr305=strict")
+    }
+}
 
 repositories {
     mavenCentral()
     maven { url = uri("https://repo.spring.io/milestone") }
 }
 
-extra["springAiVersion"] = "1.0.0-M6"
+extra["springAiVersion"] = "2.0.0-M6"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    // Jackson 3 — group ID changed from com.fasterxml.jackson to tools.jackson
+    implementation("tools.jackson.module:jackson-module-kotlin")
+    implementation("tools.jackson.dataformat:jackson-dataformat-yaml")
 
-    // Spring AI MCP Server
-    implementation("org.springframework.ai:spring-ai-mcp-server-spring-boot-starter")
+    // Spring AI MCP Server (renamed in 2.x)
+    implementation("org.springframework.ai:spring-ai-starter-mcp-server-webmvc")
 
     // Claude API
     implementation("com.anthropic:anthropic-java:0.8.0")
@@ -48,19 +54,13 @@ dependencies {
     runtimeOnly("ai.djl.pytorch:pytorch-native-cpu:2.5.1")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
 }
 
 dependencyManagement {
     imports {
         mavenBom("org.springframework.ai:spring-ai-bom:${property("springAiVersion")}")
-    }
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "21"
     }
 }
 

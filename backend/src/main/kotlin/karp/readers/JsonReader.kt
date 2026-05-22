@@ -1,7 +1,7 @@
 package karp.readers
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
+import tools.jackson.databind.SerializationFeature
+import tools.jackson.databind.json.JsonMapper
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import java.nio.file.Path
@@ -10,7 +10,9 @@ import java.nio.file.Path
 @Order(2)
 class JsonReader : BaseReader {
 
-    private val mapper = ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
+    private val mapper = JsonMapper.builder()
+        .enable(SerializationFeature.INDENT_OUTPUT)
+        .build()
 
     override val extensions = listOf(".json")
 
@@ -18,7 +20,7 @@ class JsonReader : BaseReader {
         val raw = path.toFile().readText()
         val node = mapper.readTree(raw)
         val pretty = mapper.writeValueAsString(node)
-        val topLevelKeys = if (node.isObject) node.fieldNames().asSequence().toList() else emptyList()
+        val topLevelKeys = if (node.isObject) node.propertyNames().toList() else emptyList()
 
         return ReadResult(
             text = pretty,
