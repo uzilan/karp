@@ -60,6 +60,15 @@ class EmbeddingService(
         }
     }
 
+    fun resetCollection() {
+        try {
+            qdrant.deleteCollectionAsync(COLLECTION).get()
+        } catch (e: Exception) {
+            log.warn("Could not delete Qdrant collection: ${e.message}")
+        }
+        ensureCollection()
+    }
+
     @PreDestroy
     fun destroy() {
         predictor.close()

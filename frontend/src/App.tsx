@@ -43,6 +43,18 @@ export default function App() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'system-ui, sans-serif' }}>
       <header style={{ padding: '8px 16px', borderBottom: '1px solid #ddd', display: 'flex', alignItems: 'center', gap: 16, background: '#fff' }}>
         <strong style={{ fontSize: 15 }}>Karp Wiki</strong>
+        <button
+          onClick={async () => {
+            if (window.confirm('Wipe all data? This cannot be undone.')) {
+              await api.wipe()
+              setSelection(null)
+              setRefreshKey(k => k + 1)
+            }
+          }}
+          style={{ color: 'red', marginLeft: 'auto', cursor: 'pointer' }}
+        >
+          Wipe Data
+        </button>
       </header>
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <LeftPanel

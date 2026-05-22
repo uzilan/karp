@@ -6,6 +6,7 @@ import karp.core.LintService
 import karp.core.QueryAnswer
 import karp.core.QueryService
 import karp.core.WikiService
+import karp.core.WipeService
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.ai.tool.method.MethodToolCallbackProvider
 import org.springframework.context.annotation.Bean
@@ -19,7 +20,8 @@ class KarpMcpTools(
     private val query: QueryService,
     private val ingest: IngestService,
     private val lint: LintService,
-    private val sourcesDir: Path
+    private val sourcesDir: Path,
+    private val wipeService: WipeService
 ) {
     @Tool(description = "List all wiki page names in the knowledge base")
     fun listWikiPages(): List<String> = wiki.listPages()
@@ -41,6 +43,13 @@ class KarpMcpTools(
 
     @Tool(description = "Run a wiki health check and return a list of issues found")
     fun lint(): List<LintIssue> = lint.lint()
+
+    @Tool(description = "Wipe all data — deletes all wiki pages, source files, and clears the vector index. Pass confirm=\"yes\" to execute.")
+    fun wipeAllData(confirm: String): String {
+        if (confirm != "yes") return "Aborted. Pass confirm=\"yes\" to wipe all data."
+        wipeService.wipeAll()
+        return "All data wiped successfully."
+    }
 
     @Tool(description = "Ingest a local file into the wiki by absolute path")
     fun ingestFile(absolutePath: String): String {

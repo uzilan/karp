@@ -18,7 +18,8 @@ class ApiController(
     private val query: QueryService,
     private val lint: LintService,
     private val registry: ReaderRegistry,
-    private val sourcesDir: Path
+    private val sourcesDir: Path,
+    private val wipeService: WipeService
 ) {
     // Wiki
     @GetMapping("/wiki")
@@ -107,4 +108,9 @@ class ApiController(
     // Lint
     @PostMapping("/lint")
     fun lint() = lint.lint()
+
+    // Wipe
+    @PostMapping("/wipe")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun wipe() = wipeService.wipeAll()
 }

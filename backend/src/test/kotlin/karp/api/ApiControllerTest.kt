@@ -2,6 +2,7 @@ package karp.api
 
 import karp.core.*
 import karp.readers.ReaderRegistry
+import karp.core.WipeService
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,6 +23,7 @@ class ApiControllerTest {
     @MockitoBean lateinit var registry: ReaderRegistry
     @MockitoBean(name = "sourcesDir") lateinit var sourcesDir: Path
     @MockitoBean(name = "wikiDir") lateinit var wikiDir: Path
+    @MockitoBean lateinit var wipeService: WipeService
 
     @Test
     fun `GET api-wiki returns list`() {

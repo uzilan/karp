@@ -60,4 +60,5 @@ export const api = {
   fileBack: (pageName: string, content: string) =>
     post<void>('/query/file-back', { pageName, content }),
   lint: () => post<LintIssue[]>('/lint'),
+  wipe: () => fetch(`${BASE}/wipe`, { method: 'POST' }),
 }
