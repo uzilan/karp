@@ -1,0 +1,29 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file: .env
+    environment:
+      KARP_SOURCES_DIR: /app/sources
+      KARP_WIKI_DIR: /app/wiki
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: "6334"
+    volumes:
+      - ./data/sources:/app/sources
+      - ./data/wiki:/app/wiki
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.9.2
+    volumes:
+      - ./data/qdrant:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:6333/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
