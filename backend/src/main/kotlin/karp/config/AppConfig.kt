@@ -39,7 +39,4 @@ class AppConfig(private val props: KarpProperties) {
     fun qdrantClient(): QdrantClient = QdrantClient(
         QdrantGrpcClient.newBuilder(props.qdrantHost, props.qdrantPort, false).build()
     )
-
-    @Bean
-    fun karpProperties(): KarpProperties = props
 }

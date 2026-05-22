@@ -2,10 +2,11 @@ package karp.watcher
 
 import karp.core.IngestService
 import org.slf4j.LoggerFactory
+import org.springframework.boot.context.event.ApplicationReadyEvent
+import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.nio.file.*
-import jakarta.annotation.PostConstruct
 
 @Service
 class FileWatcherService(
@@ -14,7 +15,7 @@ class FileWatcherService(
 ) {
     private val log = LoggerFactory.getLogger(FileWatcherService::class.java)
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent::class)
     @Async
     fun watch() {
         val watcher = FileSystems.getDefault().newWatchService()
