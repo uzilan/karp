@@ -4,6 +4,52 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Karp Wiki</title>
+    <style>
+      :root[data-theme="light"] {
+        --color-bg:            #fafafa;
+        --color-surface:       #ffffff;
+        --color-border:        #dddddd;
+        --color-border-dashed: #cccccc;
+        --color-text:          #333333;
+        --color-text-muted:    #555555;
+        --color-text-faint:    #888888;
+        --color-selected-bg:   #e8f0fe;
+        --color-selected-text: #1a73e8;
+        --color-drag-bg:       #f0f4ff;
+        --color-accent:        #1a73e8;
+        --color-chip-bg:       #f1f3f4;
+        --color-row-alt:       #f9f9f9;
+      }
+      :root[data-theme="dark"] {
+        --color-bg:            #1e1e1e;
+        --color-surface:       #252526;
+        --color-border:        #3c3c3c;
+        --color-border-dashed: #404040;
+        --color-text:          #d4d4d4;
+        --color-text-muted:    #aaaaaa;
+        --color-text-faint:    #777777;
+        --color-selected-bg:   #2d3f66;
+        --color-selected-text: #6ea4f0;
+        --color-drag-bg:       #1e2a44;
+        --color-accent:        #1a73e8;
+        --color-chip-bg:       #2a2a2a;
+        --color-row-alt:       #2a2a2e;
+      }
+      body {
+        background: var(--color-bg);
+        color: var(--color-text);
+        margin: 0;
+      }
+    </style>
+    <script>
+      (function() {
+        var stored = localStorage.getItem('karp-dark-mode');
+        var dark = stored !== null
+          ? stored === 'true'
+          : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
