@@ -32,6 +32,7 @@ export const api = {
     list: () => get<string[]>('/wiki'),
     get: (name: string) => get<WikiPage>(`/wiki/${name}`),
     update: (name: string, content: string) => put(`/wiki/${name}`, { content }),
+    clusters: () => get<Record<string, string[]>>('/wiki/clusters'),
   },
   sources: {
     list: () => get<SourceFile[]>('/sources'),
