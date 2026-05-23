@@ -60,13 +60,13 @@ export default function CenterPanel({ selection, refreshKey }: Props) {
 
   if (!selection) return (
     <div style={{ ...outerStyle, alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: '#aaa', fontSize: 14 }}>Select a page or file to view.</p>
+      <p style={{ color: 'var(--color-text-faint)', fontSize: 14 }}>Select a page or file to view.</p>
     </div>
   )
 
   if (loading) return (
     <div style={{ ...outerStyle, alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: '#aaa' }}>Loading…</p>
+      <p style={{ color: 'var(--color-text-faint)' }}>Loading…</p>
     </div>
   )
 
@@ -74,10 +74,10 @@ export default function CenterPanel({ selection, refreshKey }: Props) {
 
   return (
     <div style={outerStyle}>
-      <div style={{ padding: '8px 24px', borderBottom: '1px solid #eee', fontSize: 12, color: '#888', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <div style={{ padding: '8px 24px', borderBottom: '1px solid var(--color-border)', fontSize: 12, color: 'var(--color-text-faint)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <span>{title}</span>
         {tags.map(tag => (
-          <span key={tag} style={{ background: '#e8f0fe', color: '#1a73e8', borderRadius: 10, padding: '1px 8px' }}>#{tag}</span>
+          <span key={tag} style={{ background: 'var(--color-selected-bg)', color: 'var(--color-selected-text)', borderRadius: 10, padding: '1px 8px' }}>#{tag}</span>
         ))}
       </div>
       <div style={innerStyle}>
