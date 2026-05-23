@@ -98,11 +98,11 @@ export default function RightPanel({ allTags, selectedTags, onTagToggle, onRefre
                   placeholder="page name…"
                   value={fileBackName}
                   onChange={e => setFileBackName(e.target.value)}
-                  style={{ flex: 1, fontSize: 11, padding: '2px 6px', border: '1px solid var(--color-border)', borderRadius: 3 }}
+                  style={{ flex: 1, fontSize: 11, padding: '2px 6px', border: '1px solid var(--color-border)', borderRadius: 3, background: 'var(--color-surface)', color: 'var(--color-text)' }}
                 />
                 <button
                   onClick={() => fileBack(m.text)}
-                  style={{ fontSize: 11, padding: '2px 8px', cursor: 'pointer' }}>
+                  style={{ fontSize: 11, padding: '2px 8px', cursor: 'pointer', color: 'var(--color-text)' }}>
                   File to wiki
                 </button>
               </div>

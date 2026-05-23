@@ -41,7 +41,7 @@ export default function OpenApiViewer({ content }: { content: string }) {
             borderLeft: `4px solid ${METHOD_COLORS[ep.method] ?? 'var(--color-border)'}`
           }}>
             <span style={{
-              background: METHOD_COLORS[ep.method] ?? '#ccc',
+              background: METHOD_COLORS[ep.method] ?? 'var(--color-border)',
               color: '#fff', borderRadius: 3, padding: '2px 8px',
               fontWeight: 700, fontSize: 11, minWidth: 65, textAlign: 'center'
             }}>{ep.method}</span>
