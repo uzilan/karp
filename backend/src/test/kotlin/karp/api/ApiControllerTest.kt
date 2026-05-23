@@ -24,6 +24,7 @@ class ApiControllerTest {
     @MockitoBean(name = "sourcesDir") lateinit var sourcesDir: Path
     @MockitoBean(name = "wikiDir") lateinit var wikiDir: Path
     @MockitoBean lateinit var wipeService: WipeService
+    @MockitoBean lateinit var clusterService: ClusterService
 
     @Test
     fun `GET api-wiki returns list`() {
@@ -43,6 +44,19 @@ class ApiControllerTest {
         mvc.get("/api/wiki/missing")
             .andExpect {
                 status { isNotFound() }
+            }
+    }
+
+    @Test
+    fun `GET api-wiki-clusters returns cluster map`() {
+        whenever(clusterService.getClusters()).thenReturn(
+            mapOf("Authentication" to listOf("auth-login", "auth-token"))
+        )
+
+        mvc.get("/api/wiki/clusters")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.Authentication[0]") { value("auth-login") }
             }
     }
 }

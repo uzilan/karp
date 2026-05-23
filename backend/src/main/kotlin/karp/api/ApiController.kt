@@ -19,11 +19,15 @@ class ApiController(
     private val lint: LintService,
     private val registry: ReaderRegistry,
     private val sourcesDir: Path,
-    private val wipeService: WipeService
+    private val wipeService: WipeService,
+    private val clusterService: ClusterService,
 ) {
     // Wiki
     @GetMapping("/wiki")
     fun listWiki() = wiki.listPages()
+
+    @GetMapping("/wiki/clusters")
+    fun getWikiClusters(): Map<String, List<String>> = clusterService.getClusters()
 
     @GetMapping("/wiki/{name}")
     fun getWikiPage(@PathVariable name: String): ResponseEntity<Map<String, String>> {
