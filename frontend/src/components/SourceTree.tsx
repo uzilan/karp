@@ -52,7 +52,7 @@ export default function SourceTree({ serverSources, refreshKey, selection, onSel
     if (addRootFolderKey === 0) return
     const id = genId()
     const parentId = folderRef.current
-    const node: FolderNode = { id, type: 'folder', name: 'New Folder', children: [], collapsed: false }
+    const node: FolderNode = { id, type: 'folder', name: '', children: [], collapsed: false }
     setTree(prev => {
       if (parentId && prev.nodes[parentId]?.type === 'folder') {
         const p = prev.nodes[parentId] as FolderNode
@@ -61,7 +61,7 @@ export default function SourceTree({ serverSources, refreshKey, selection, onSel
       return { ...prev, nodes: { ...prev.nodes, [id]: node }, root: [...prev.root, id] }
     })
     setEditingId(id)
-    setEditName('New Folder')
+    setEditName('')
   }, [addRootFolderKey])
 
   useEffect(() => {
@@ -97,9 +97,30 @@ export default function SourceTree({ serverSources, refreshKey, selection, onSel
     })
   }, [serverSources, refreshKey])
 
+  const deleteFolder = (id: string) => {
+    setTree(prev => {
+      const folder = prev.nodes[id] as FolderNode
+      const children = folder.children
+      const pid = findParent(prev, id)
+      let next = { ...prev, nodes: { ...prev.nodes } }
+      if (pid === null) {
+        const idx = next.root.indexOf(id)
+        next.root = [...next.root.slice(0, idx), ...children, ...next.root.slice(idx + 1)]
+      } else {
+        const p = next.nodes[pid] as FolderNode
+        const idx = p.children.indexOf(id)
+        next.nodes[pid] = { ...p, children: [...p.children.slice(0, idx), ...children, ...p.children.slice(idx + 1)] }
+      }
+      const { [id]: _, ...rest } = next.nodes
+      next.nodes = rest
+      return next
+    })
+    if (selectedFolderId === id) onSelectFolder(null)
+  }
+
   const addFolder = (parentId: string | null) => {
     const id = genId()
-    const node: FolderNode = { id, type: 'folder', name: 'New Folder', children: [], collapsed: false }
+    const node: FolderNode = { id, type: 'folder', name: '', children: [], collapsed: false }
     setTree(prev => {
       if (parentId && prev.nodes[parentId]?.type === 'folder') {
         const p = prev.nodes[parentId] as FolderNode
@@ -108,7 +129,7 @@ export default function SourceTree({ serverSources, refreshKey, selection, onSel
       return { ...prev, nodes: { ...prev.nodes, [id]: node }, root: [...prev.root, id] }
     })
     setEditingId(id)
-    setEditName('New Folder')
+    setEditName('')
   }
 
   const commitRename = (id: string) => {
@@ -213,11 +234,18 @@ export default function SourceTree({ serverSources, refreshKey, selection, onSel
             <span style={{ flex: 1 }}>{fn.name}</span>
           )}
           {hovered && (
-            <span
-              title="Add subfolder"
-              onClick={e => { e.stopPropagation(); addFolder(id) }}
-              style={{ fontSize: 11, color: 'var(--color-text-faint)', padding: '0 2px', borderRadius: 3 }}
-            >＋</span>
+            <>
+              <span
+                title="Add subfolder"
+                onClick={e => { e.stopPropagation(); addFolder(id) }}
+                style={{ fontSize: 11, color: 'var(--color-text-faint)', padding: '0 2px', borderRadius: 3 }}
+              >＋</span>
+              <span
+                title="Delete folder"
+                onClick={e => { e.stopPropagation(); deleteFolder(id) }}
+                style={{ fontSize: 11, color: 'var(--color-text-faint)', padding: '0 2px', borderRadius: 3 }}
+              >✕</span>
+            </>
           )}
         </div>
         {!fn.collapsed && fn.children.map(cid => renderNode(cid, depth + 1))}
