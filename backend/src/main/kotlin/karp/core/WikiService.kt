@@ -1,5 +1,6 @@
 package karp.core
 
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import java.nio.file.Path
 import java.time.Instant
@@ -8,6 +9,7 @@ import kotlin.io.path.*
 @Service
 class WikiService(
     private val wikiDir: Path,
+    @Lazy private val clusterService: ClusterService,
 ) {
     fun listPages(): List<String> =
         wikiDir
@@ -21,15 +23,14 @@ class WikiService(
         return if (file.exists()) file.readText() else null
     }
 
-    fun writePage(
-        name: String,
-        content: String,
-    ) {
+    fun writePage(name: String, content: String) {
         wikiDir.resolve("$name.md").writeText(content)
+        clusterService.triggerAsync()
     }
 
     fun deletePage(name: String) {
         wikiDir.resolve("$name.md").deleteIfExists()
+        clusterService.triggerAsync()
     }
 
     fun appendToLog(entry: String) {

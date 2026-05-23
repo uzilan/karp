@@ -22,6 +22,7 @@ class IngestServiceTest {
 
         val readResult = ReadResult("text", emptyMap(), "preview")
         whenever(registry.read(any())).thenReturn(readResult)
+        whenever(llm.ingestDocument(any())).thenReturn(IngestResult(emptyList(), emptyList()))
 
         val svc = IngestService(sourcesDir, registry, wiki, llm, embedding)
         svc.ingest(file)
