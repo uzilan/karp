@@ -87,7 +87,7 @@ export default function App() {
               setRefreshKey(k => k + 1)
             }
           }}
-          style={{ color: 'red', cursor: 'pointer' }}
+          style={{ color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}
         >
           Wipe Data
         </button>
