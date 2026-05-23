@@ -137,4 +137,23 @@ class EmbeddingService(
             }.map { hit -> SearchResult(pageName = hit.payloadMap["name"]?.stringValue ?: "", score = hit.score) }
             .take(topK)
     }
+
+    fun scrollAll(): List<Pair<String, List<Float>>> {
+        val request = ScrollPoints.newBuilder()
+            .setCollectionName(COLLECTION)
+            .setLimit(1000)
+            .setWithPayload(WithPayloadSelector.newBuilder().setEnable(true))
+            .setWithVectors(WithVectorsSelector.newBuilder().setEnable(true))
+            .build()
+        return try {
+            qdrant.scrollAsync(request).get().resultList.mapNotNull { point ->
+                val name = point.payloadMap["name"]?.stringValue ?: return@mapNotNull null
+                val vector = point.vectors.vector.dataList
+                name to vector
+            }
+        } catch (e: Exception) {
+            log.warn("scrollAll failed: ${e.message}")
+            emptyList()
+        }
+    }
 }
