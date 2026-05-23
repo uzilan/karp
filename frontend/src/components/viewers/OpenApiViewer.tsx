@@ -37,8 +37,8 @@ export default function OpenApiViewer({ content }: { content: string }) {
         {endpoints.map((ep, i) => (
           <div key={i} style={{
             display: 'flex', alignItems: 'center', gap: 12,
-            padding: '8px 12px', border: '1px solid #e0e0e0', borderRadius: 4,
-            borderLeft: `4px solid ${METHOD_COLORS[ep.method] ?? '#ccc'}`
+            padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: 4,
+            borderLeft: `4px solid ${METHOD_COLORS[ep.method] ?? 'var(--color-border)'}`
           }}>
             <span style={{
               background: METHOD_COLORS[ep.method] ?? '#ccc',
@@ -46,7 +46,7 @@ export default function OpenApiViewer({ content }: { content: string }) {
               fontWeight: 700, fontSize: 11, minWidth: 65, textAlign: 'center'
             }}>{ep.method}</span>
             <code style={{ flex: 1, fontSize: 13 }}>{ep.path}</code>
-            {ep.summary && <span style={{ color: '#666', fontSize: 12 }}>{ep.summary}</span>}
+            {ep.summary && <span style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>{ep.summary}</span>}
           </div>
         ))}
       </div>

@@ -19,10 +19,10 @@ export default function ExcelViewer({ content }: { content: string }) {
               <table style={{ borderCollapse: 'collapse', minWidth: '100%' }}>
                 <tbody>
                   {dataLines.map((row, ri) => (
-                    <tr key={ri} style={{ background: ri % 2 === 0 ? '#f9f9f9' : '#fff' }}>
+                    <tr key={ri} style={{ background: ri % 2 === 0 ? 'var(--color-row-alt)' : 'var(--color-surface)' }}>
                       {row.split(' | ').map((cell, ci) => (
                         <td key={ci} style={{
-                          border: '1px solid #ddd', padding: '4px 10px',
+                          border: '1px solid var(--color-border)', padding: '4px 10px',
                           fontWeight: ri === 0 ? 700 : 400
                         }}>
                           {cell.trim()}
