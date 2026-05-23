@@ -138,4 +138,12 @@ class LlmService(
         val cleaned = json.trim().removePrefix("```json").removeSuffix("```").trim()
         return mapper.readValue(cleaned)
     }
+
+    fun nameCluster(pageNames: List<String>): String {
+        val prompt = "These wiki pages belong to the same topic cluster: ${pageNames.joinToString(", ")}. " +
+            "Respond with a short 1-3 word label for this cluster (e.g. 'Authentication', 'API Design', 'Data Model'). " +
+            "Respond with the label only, no explanation, no punctuation."
+        return ask("You are a wiki organizer. Respond with a short cluster label only.", prompt)
+            .trim().take(50)
+    }
 }
