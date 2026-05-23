@@ -13,8 +13,23 @@ interface Props {
   onFileDrop: (file: File) => void
 }
 
+const CLUSTERS_KEY = 'karp-wiki-clusters'
+const CLUSTERS_COLLAPSED_KEY = 'karp-wiki-clusters-collapsed'
+
+function loadClusters(): Record<string, string[]> {
+  try { const s = localStorage.getItem(CLUSTERS_KEY); if (s) return JSON.parse(s) } catch {}
+  return {}
+}
+
+function loadCollapsed(): Record<string, boolean> {
+  try { const s = localStorage.getItem(CLUSTERS_COLLAPSED_KEY); if (s) return JSON.parse(s) } catch {}
+  return {}
+}
+
 export default function LeftPanel({ refreshKey, sources, selectedTags, selection, onSelect, onFileDrop }: Props) {
   const [wikiPages, setWikiPages] = useState<string[]>([])
+  const [wikiClusters, setWikiClusters] = useState<Record<string, string[]>>(loadClusters)
+  const [clusterCollapsed, setClusterCollapsed] = useState<Record<string, boolean>>(loadCollapsed)
   const [dragging, setDragging] = useState(false)
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [addFolderKey, setAddFolderKey] = useState(0)
@@ -23,7 +38,19 @@ export default function LeftPanel({ refreshKey, sources, selectedTags, selection
 
   useEffect(() => {
     api.wiki.list().then(setWikiPages).catch(() => {})
+    api.wiki.clusters().then(clusters => {
+      localStorage.setItem(CLUSTERS_KEY, JSON.stringify(clusters))
+      setWikiClusters(clusters)
+    }).catch(() => {})
   }, [refreshKey])
+
+  const toggleCluster = (name: string) => {
+    setClusterCollapsed(prev => {
+      const next = { ...prev, [name]: !prev[name] }
+      localStorage.setItem(CLUSTERS_COLLAPSED_KEY, JSON.stringify(next))
+      return next
+    })
+  }
 
   const filteredSources = selectedTags.length === 0
     ? sources
@@ -47,12 +74,19 @@ export default function LeftPanel({ refreshKey, sources, selectedTags, selection
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     cursor: 'pointer', userSelect: 'none'
   }
-  const itemStyle = (active: boolean): React.CSSProperties => ({
-    padding: '4px 16px', cursor: 'pointer',
+  const itemStyle = (active: boolean, indent = 0): React.CSSProperties => ({
+    padding: `4px 16px 4px ${16 + indent * 14}px`, cursor: 'pointer',
     background: active ? '#e8f0fe' : 'transparent',
     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
     color: active ? '#1a73e8' : '#333'
   })
+  const clusterHeaderStyle: React.CSSProperties = {
+    padding: '4px 8px', cursor: 'pointer', userSelect: 'none',
+    display: 'flex', alignItems: 'center', gap: 4, fontSize: 12,
+    color: '#555', fontWeight: 600,
+  }
+
+  const hasClusters = Object.keys(wikiClusters).length > 0
 
   return (
     <div style={panelStyle}>
@@ -63,14 +97,31 @@ export default function LeftPanel({ refreshKey, sources, selectedTags, selection
         </div>
         {wikiOpen && (
           <div style={{ overflow: 'auto', flex: 1, minHeight: 0 }}>
-            {wikiPages.length === 0 && (
+            {!hasClusters && wikiPages.length === 0 && (
               <div style={{ padding: '4px 16px', color: '#999', fontSize: 12 }}>No pages yet</div>
             )}
-            {wikiPages.map(name => (
+            {!hasClusters && wikiPages.map(name => (
               <div key={name}
                 style={itemStyle(selection?.type === 'wiki' && selection.name === name)}
                 onClick={() => onSelect({ type: 'wiki', name })}>
                 📄 {name}
+              </div>
+            ))}
+            {hasClusters && Object.entries(wikiClusters).map(([clusterName, pages]) => (
+              <div key={clusterName}>
+                <div onClick={() => toggleCluster(clusterName)} style={clusterHeaderStyle}>
+                  <span style={{ fontSize: 9, color: '#999', minWidth: 10 }}>
+                    {clusterCollapsed[clusterName] ? '▶' : '▼'}
+                  </span>
+                  <span>📁 {clusterName}</span>
+                </div>
+                {!clusterCollapsed[clusterName] && pages.map(name => (
+                  <div key={name}
+                    style={itemStyle(selection?.type === 'wiki' && selection.name === name, 1)}
+                    onClick={() => onSelect({ type: 'wiki', name })}>
+                    📄 {name}
+                  </div>
+                ))}
               </div>
             ))}
           </div>
