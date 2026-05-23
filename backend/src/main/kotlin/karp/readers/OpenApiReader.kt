@@ -8,21 +8,29 @@ import java.nio.file.Path
 @Component
 @Order(1)
 class OpenApiReader : BaseReader {
-
     override val extensions = listOf(".json", ".yaml", ".yml")
 
-    private val openApiFilenames = setOf(
-        "openapi", "swagger", "api-spec", "api_spec"
-    )
+    private val openApiFilenames =
+        setOf(
+            "openapi",
+            "swagger",
+            "api-spec",
+            "api_spec",
+        )
 
     override fun read(path: Path): ReadResult {
-        val name = path.fileName.toString().substringBeforeLast('.').lowercase()
+        val name =
+            path.fileName
+                .toString()
+                .substringBeforeLast('.')
+                .lowercase()
         if (name !in openApiFilenames) {
             throw UnsupportedOperationException("Not an OpenAPI file: $name")
         }
 
-        val result = OpenAPIV3Parser().read(path.toString())
-            ?: throw IllegalArgumentException("Failed to parse OpenAPI spec: $path")
+        val result =
+            OpenAPIV3Parser().read(path.toString())
+                ?: throw IllegalArgumentException("Failed to parse OpenAPI spec: $path")
 
         val sb = StringBuilder()
         sb.appendLine("# ${result.info?.title ?: "API"} — ${result.info?.version ?: ""}")
@@ -44,12 +52,13 @@ class OpenApiReader : BaseReader {
 
         return ReadResult(
             text = sb.toString(),
-            metadata = mapOf(
-                "fileName" to path.fileName.toString(),
-                "title" to (result.info?.title ?: ""),
-                "endpointCount" to endpointCount
-            ),
-            preview = "OpenAPI spec: ${result.info?.title}, $endpointCount endpoints"
+            metadata =
+                mapOf(
+                    "fileName" to path.fileName.toString(),
+                    "title" to (result.info?.title ?: ""),
+                    "endpointCount" to endpointCount,
+                ),
+            preview = "OpenAPI spec: ${result.info?.title}, $endpointCount endpoints",
         )
     }
 }

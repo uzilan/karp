@@ -1,10 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import LeftPanel from './components/LeftPanel'
 import CenterPanel from './components/CenterPanel'
 import RightPanel from './components/RightPanel'
-import IngestModal from './components/IngestModal'
 import { api } from './api/client'
-import type { IngestPreview } from './types'
+import type { SourceFile } from './types'
 
 export type Selection =
   | { type: 'wiki'; name: string }
@@ -13,8 +12,31 @@ export type Selection =
 
 export default function App() {
   const [selection, setSelection] = useState<Selection>(null)
-  const [ingestPreview, setIngestPreview] = useState<IngestPreview | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [sources, setSources] = useState<SourceFile[]>([])
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    api.sources.list().then(setSources).catch(() => {})
+  }, [refreshKey])
+
+  const allTags = Array.from(new Set(sources.flatMap(s => s.tags ?? []))).sort()
+
+  const toggleTag = (tag: string) =>
+    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+
+  const pollUntilComplete = (fileName: string) => {
+    if (pollRef.current) clearInterval(pollRef.current)
+    pollRef.current = setInterval(async () => {
+      const status = await api.sources.pollStatus(fileName)
+      if (status.status === 'COMPLETE' || status.status === 'ERROR') {
+        clearInterval(pollRef.current!)
+        pollRef.current = null
+        setRefreshKey(k => k + 1)
+      }
+    }, 2000)
+  }
 
   const handleFileDrop = async (file: File) => {
     try {
@@ -22,21 +44,16 @@ export default function App() {
       if ('duplicate' in result) {
         const reIngest = window.confirm(`"${result.fileName}" already exists. Re-ingest to update?`)
         if (reIngest) {
-          const preview = await api.sources.upload(file, true)
-          if (!('duplicate' in preview)) setIngestPreview(preview)
+          const r = await api.sources.upload(file, true)
+          if (!('duplicate' in r)) { setRefreshKey(k => k + 1); pollUntilComplete(r.fileName) }
         }
       } else {
-        setIngestPreview(result)
+        setRefreshKey(k => k + 1)
+        pollUntilComplete(result.fileName)
       }
     } catch (e) {
       alert(`Upload failed: ${e}`)
     }
-  }
-
-  const handleIngestConfirm = async (fileName: string, tags: string[], category: string) => {
-    await api.sources.confirm(fileName, tags, category)
-    setIngestPreview(null)
-    setRefreshKey(k => k + 1)
   }
 
   return (
@@ -59,20 +76,15 @@ export default function App() {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <LeftPanel
           refreshKey={refreshKey}
+          sources={sources}
+          selectedTags={selectedTags}
           selection={selection}
           onSelect={setSelection}
           onFileDrop={handleFileDrop}
         />
-        <CenterPanel selection={selection} />
-        <RightPanel />
+        <CenterPanel selection={selection} refreshKey={refreshKey} />
+        <RightPanel allTags={allTags} selectedTags={selectedTags} onTagToggle={toggleTag} onRefresh={() => setRefreshKey(k => k + 1)} />
       </div>
-      {ingestPreview && (
-        <IngestModal
-          preview={ingestPreview}
-          onConfirm={handleIngestConfirm}
-          onCancel={() => setIngestPreview(null)}
-        />
-      )}
     </div>
   )
 }

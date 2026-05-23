@@ -6,10 +6,13 @@ import java.time.Instant
 import kotlin.io.path.*
 
 @Service
-class WikiService(private val wikiDir: Path) {
-
+class WikiService(
+    private val wikiDir: Path,
+) {
     fun listPages(): List<String> =
-        wikiDir.toFile().listFiles { f -> f.extension == "md" }
+        wikiDir
+            .toFile()
+            .listFiles { f -> f.extension == "md" }
             ?.map { it.nameWithoutExtension }
             ?: emptyList()
 
@@ -18,7 +21,10 @@ class WikiService(private val wikiDir: Path) {
         return if (file.exists()) file.readText() else null
     }
 
-    fun writePage(name: String, content: String) {
+    fun writePage(
+        name: String,
+        content: String,
+    ) {
         wikiDir.resolve("$name.md").writeText(content)
     }
 
@@ -37,6 +43,5 @@ class WikiService(private val wikiDir: Path) {
         }
     }
 
-    fun allPagesContent(): Map<String, String> =
-        listPages().associateWith { readPage(it) ?: "" }
+    fun allPagesContent(): Map<String, String> = listPages().associateWith { readPage(it) ?: "" }
 }

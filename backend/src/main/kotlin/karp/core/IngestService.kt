@@ -1,6 +1,5 @@
 package karp.core
 
-import karp.readers.ReadResult
 import karp.readers.ReaderRegistry
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -12,19 +11,10 @@ import java.util.concurrent.LinkedBlockingQueue
 
 enum class IngestStatus { PENDING, PROCESSING, COMPLETE, ERROR }
 
-data class IngestPreview(
-    val fileName: String,
-    val suggestedCategory: String,
-    val suggestedTags: List<String>,
-    val preview: String
-)
-
 private data class IngestJob(
     val fileName: String,
     val sourcePath: Path,
-    val tags: List<String>,
-    val category: String,
-    val readResult: ReadResult
+    val readResult: karp.readers.ReadResult,
 )
 
 @Service
@@ -33,7 +23,7 @@ class IngestService(
     private val registry: ReaderRegistry,
     private val wiki: WikiService,
     private val llm: LlmService,
-    private val embedding: EmbeddingService
+    private val embedding: EmbeddingService,
 ) {
     private val log = LoggerFactory.getLogger(IngestService::class.java)
     private val statusMap = ConcurrentHashMap<String, IngestStatus>()
@@ -43,25 +33,11 @@ class IngestService(
         Thread(::processQueue, "ingest-worker").apply { isDaemon = true }.start()
     }
 
-    fun preview(file: Path): IngestPreview {
-        val dest = sourcesDir.resolve(file.fileName)
-        Files.copy(file, dest, StandardCopyOption.REPLACE_EXISTING)
-        return previewUploaded(dest)
-    }
-
-    fun previewUploaded(dest: Path): IngestPreview {
+    fun ingest(dest: Path) {
+        val fileName = dest.fileName.toString()
         val result = registry.read(dest)
-        val suggestion = llm.suggestTagsAndCategory(result)
-        result.suggestedCategory = suggestion.category
-        result.suggestedTags = suggestion.tags
-        return IngestPreview(dest.fileName.toString(), suggestion.category, suggestion.tags, result.preview)
-    }
-
-    fun confirm(fileName: String, tags: List<String>, category: String) {
-        val path = sourcesDir.resolve(fileName)
-        val result = registry.read(path)
         statusMap[fileName] = IngestStatus.PENDING
-        queue.put(IngestJob(fileName, path, tags, category, result))
+        queue.put(IngestJob(fileName, dest, result))
     }
 
     fun getStatus(fileName: String): IngestStatus? = statusMap[fileName]
@@ -71,12 +47,16 @@ class IngestService(
             val job = queue.take()
             statusMap[job.fileName] = IngestStatus.PROCESSING
             try {
-                val updates = llm.updateWikiPages(job.readResult, job.tags, job.category)
-                updates.forEach { update ->
+                val ingestResult = llm.ingestDocument(job.readResult)
+                ingestResult.pages.forEach { update ->
                     wiki.writePage(update.name, update.content)
-                    embedding.upsertPage(update.name, update.content, job.tags, job.category)
+                    embedding.upsertPage(update.name, update.content, ingestResult.tags)
                 }
-                wiki.appendToLog("INGEST ${job.fileName} category=${job.category} tags=${job.tags}")
+                val metaDir = sourcesDir.resolve(".meta")
+                Files.createDirectories(metaDir)
+                val tagsJson = ingestResult.tags.joinToString(",", "[", "]") { "\"$it\"" }
+                metaDir.resolve("${job.fileName}.json").toFile().writeText("""{"tags":$tagsJson}""")
+                wiki.appendToLog("INGEST ${job.fileName} tags=${ingestResult.tags}")
                 statusMap[job.fileName] = IngestStatus.COMPLETE
                 log.info("Ingested: ${job.fileName}")
             } catch (e: Exception) {

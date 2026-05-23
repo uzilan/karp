@@ -33,9 +33,6 @@ dependencies {
     // Spring AI MCP Server (renamed in 2.x)
     implementation("org.springframework.ai:spring-ai-starter-mcp-server-webmvc")
 
-    // Claude API
-    implementation("com.anthropic:anthropic-java:0.8.0")
-
     // Qdrant
     implementation("io.qdrant:client:1.9.1")
     implementation("com.google.protobuf:protobuf-java:3.24.0")

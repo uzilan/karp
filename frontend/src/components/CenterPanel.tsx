@@ -7,7 +7,7 @@ import ExcelViewer from './viewers/ExcelViewer'
 import OpenApiViewer from './viewers/OpenApiViewer'
 import CodeViewer from './viewers/CodeViewer'
 
-interface Props { selection: Selection }
+interface Props { selection: Selection; refreshKey?: number }
 
 function getViewerType(name: string): 'markdown' | 'excel' | 'json' | 'openapi' | 'code' {
   const lower = name.toLowerCase()
@@ -24,13 +24,14 @@ function getViewerType(name: string): 'markdown' | 'excel' | 'json' | 'openapi' 
   return 'code'
 }
 
-export default function CenterPanel({ selection }: Props) {
+export default function CenterPanel({ selection, refreshKey }: Props) {
   const [content, setContent] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [title, setTitle] = useState('')
+  const [tags, setTags] = useState<string[]>([])
 
   useEffect(() => {
-    if (!selection) { setContent(null); setTitle(''); return }
+    if (!selection) { setContent(null); setTitle(''); setTags([]); return }
     setLoading(true)
     const load = async () => {
       try {
@@ -38,10 +39,12 @@ export default function CenterPanel({ selection }: Props) {
           const page = await api.wiki.get(selection.name)
           setContent(page.content)
           setTitle(selection.name)
+          setTags([])
         } else {
           const data = await api.sources.getData(selection.name)
           setContent(data.text)
           setTitle(selection.name)
+          setTags(data.tags ?? [])
         }
       } catch {
         setContent('Failed to load content.')
@@ -50,7 +53,7 @@ export default function CenterPanel({ selection }: Props) {
       }
     }
     load()
-  }, [selection])
+  }, [selection, refreshKey])
 
   const outerStyle: React.CSSProperties = { flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }
   const innerStyle: React.CSSProperties = { padding: 24, flex: 1 }
@@ -71,8 +74,11 @@ export default function CenterPanel({ selection }: Props) {
 
   return (
     <div style={outerStyle}>
-      <div style={{ padding: '8px 24px', borderBottom: '1px solid #eee', fontSize: 12, color: '#888' }}>
-        {title}
+      <div style={{ padding: '8px 24px', borderBottom: '1px solid #eee', fontSize: 12, color: '#888', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span>{title}</span>
+        {tags.map(tag => (
+          <span key={tag} style={{ background: '#e8f0fe', color: '#1a73e8', borderRadius: 10, padding: '1px 8px' }}>#{tag}</span>
+        ))}
       </div>
       <div style={innerStyle}>
         {selection.type === 'wiki' ? (

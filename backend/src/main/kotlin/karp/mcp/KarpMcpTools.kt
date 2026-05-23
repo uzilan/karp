@@ -34,11 +34,10 @@ class KarpMcpTools(
     fun listSources(): List<String> =
         sourcesDir.toFile().listFiles { f -> f.isFile }?.map { it.name } ?: emptyList()
 
-    @Tool(description = "Semantic search across the wiki. Optional: filter by tags (comma-separated) or category")
-    fun search(query: String, tags: String = "", category: String = ""): QueryAnswer {
+    @Tool(description = "Semantic search across the wiki. Optional: filter by tags (comma-separated)")
+    fun search(query: String, tags: String = ""): QueryAnswer {
         val tagList = tags.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-        val cat = category.ifBlank { null }
-        return this.query.query(query, tagList, cat)
+        return this.query.query(query, tagList)
     }
 
     @Tool(description = "Run a wiki health check and return a list of issues found")
@@ -55,9 +54,8 @@ class KarpMcpTools(
     fun ingestFile(absolutePath: String): String {
         val path = Path.of(absolutePath)
         return try {
-            val preview = ingest.preview(path)
-            ingest.confirm(preview.fileName, preview.suggestedTags, preview.suggestedCategory)
-            "Queued for ingest: ${preview.fileName} (category=${preview.suggestedCategory}, tags=${preview.suggestedTags})"
+            ingest.ingest(path)
+            "Queued for ingest: ${path.fileName}"
         } catch (e: Exception) {
             "Error: ${e.message}"
         }

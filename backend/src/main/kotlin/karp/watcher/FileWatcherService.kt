@@ -37,10 +37,10 @@ class FileWatcherService(
                     if (fullPath.toFile().isFile) {
                         log.info("New file detected: $filename")
                         try {
-                            ingestService.previewUploaded(fullPath)
-                            log.info("Preview ready for watcher-detected file: $filename — confirm via UI")
+                            ingestService.ingest(fullPath)
+                            log.info("Queued for ingest: $filename")
                         } catch (e: Exception) {
-                            log.warn("Could not preview $filename: ${e.message}")
+                            log.warn("Could not ingest $filename: ${e.message}")
                         }
                     }
                 }

@@ -18,7 +18,7 @@ COPY --from=frontend-build /frontend/dist src/main/resources/static/
 RUN ./gradlew bootJar --no-daemon
 
 # Stage 3: Runtime
-FROM eclipse-temurin:25-jre-alpine
+FROM eclipse-temurin:25-jre-noble
 WORKDIR /app
 COPY --from=backend-build /backend/build/libs/*.jar app.jar
 RUN mkdir -p /app/sources/errors /app/wiki

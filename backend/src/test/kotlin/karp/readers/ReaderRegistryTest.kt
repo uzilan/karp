@@ -1,17 +1,20 @@
 package karp.readers
 
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
 class ReaderRegistryTest {
+    private val registry =
+        ReaderRegistry(
+            listOf(
+                object : BaseReader {
+                    override val extensions = listOf(".foo")
 
-    private val registry = ReaderRegistry(listOf(
-        object : BaseReader {
-            override val extensions = listOf(".foo")
-            override fun read(path: Path) = ReadResult("text", emptyMap(), "preview")
-        }
-    ))
+                    override fun read(path: Path) = ReadResult("text", emptyMap(), "preview")
+                },
+            ),
+        )
 
     @Test
     fun `finds reader for known extension`() {

@@ -4,8 +4,9 @@ import org.springframework.stereotype.Component
 import java.nio.file.Path
 
 @Component
-class ReaderRegistry(private val readers: List<BaseReader>) {
-
+class ReaderRegistry(
+    private val readers: List<BaseReader>,
+) {
     fun findReader(path: Path): BaseReader? {
         val ext = ".${path.fileName.toString().substringAfterLast('.').lowercase()}"
         return readers.firstOrNull { ext in it.extensions.map { e -> e.lowercase() } }

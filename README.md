@@ -5,7 +5,7 @@ LLM-maintained personal knowledge base. Drop files in, Claude builds a structure
 ## Prerequisites
 
 - Docker Desktop
-- Anthropic API key (claude.ai/settings/keys)
+- Anthropic API key (console.anthropic.com/settings/keys)
 
 ## Getting Started
 

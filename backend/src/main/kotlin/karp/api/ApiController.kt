@@ -40,17 +40,23 @@ class ApiController(
 
     // Sources
     @GetMapping("/sources")
-    fun listSources(): List<SourceFileDto> =
-        sourcesDir.toFile()
+    fun listSources(): List<SourceFileDto> {
+        val mapper = tools.jackson.databind.json.JsonMapper.builder()
+            .addModule(tools.jackson.module.kotlin.KotlinModule.Builder().build())
+            .build()
+        return sourcesDir.toFile()
             .listFiles { f -> f.isFile && f.name != "errors" }
             ?.map { f ->
-                SourceFileDto(
-                    name = f.name,
-                    extension = f.extension,
-                    category = "",
-                    tags = emptyList()
-                )
+                val metaFile = sourcesDir.resolve(".meta/${f.name}.json").toFile()
+                val tags = if (metaFile.exists()) {
+                    try {
+                        val node = mapper.readTree(metaFile)
+                        (0 until (node["tags"]?.size() ?: 0)).map { node["tags"][it].asText() }
+                    } catch (_: Exception) { emptyList() }
+                } else emptyList()
+                SourceFileDto(name = f.name, extension = f.extension, tags = tags)
             } ?: emptyList()
+    }
 
     @PostMapping("/sources/upload")
     fun upload(
@@ -61,20 +67,14 @@ class ApiController(
         if (dest.toFile().exists() && !overwrite) {
             return ResponseEntity.status(409).body(mapOf("error" to "File already exists", "fileName" to dest.fileName.toString()))
         }
-        Files.copy(file.inputStream, dest, StandardCopyOption.REPLACE_EXISTING)
         return try {
-            val preview = ingest.previewUploaded(dest)
-            ResponseEntity.ok(preview)
+            Files.copy(file.inputStream, dest, StandardCopyOption.REPLACE_EXISTING)
+            ingest.ingest(dest)
+            ResponseEntity.accepted().body(mapOf("fileName" to dest.fileName.toString()))
         } catch (e: IllegalArgumentException) {
             Files.deleteIfExists(dest)
             ResponseEntity.badRequest().body(mapOf("error" to e.message))
         }
-    }
-
-    @PostMapping("/sources/confirm")
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    fun confirm(@RequestBody req: IngestConfirmRequest) {
-        ingest.confirm(req.fileName, req.tags, req.category)
     }
 
     @GetMapping("/sources/{name}/status")
@@ -87,17 +87,30 @@ class ApiController(
     fun sourceData(@PathVariable name: String): ResponseEntity<Any> {
         val file = sourcesDir.resolve(name)
         if (!file.toFile().exists()) return ResponseEntity.notFound().build()
+        val metaFile = sourcesDir.resolve(".meta/$name.json").toFile()
+        val meta = if (metaFile.exists()) {
+            try {
+                val mapper = tools.jackson.databind.json.JsonMapper.builder()
+                    .addModule(tools.jackson.module.kotlin.KotlinModule.Builder().build())
+                    .build()
+                val node = mapper.readTree(metaFile)
+                mapOf("tags" to (node["tags"]?.let { arr -> (0 until arr.size()).map { arr[it].asText() } } ?: emptyList<String>()))
+            } catch (e: Exception) {
+                org.slf4j.LoggerFactory.getLogger(ApiController::class.java).warn("Could not read meta for $name: ${e.message}")
+                emptyMap<String, Any>()
+            }
+        } else emptyMap()
         return try {
             val result = registry.read(file)
-            ResponseEntity.ok(mapOf("text" to result.text, "metadata" to result.metadata, "preview" to result.preview))
+            ResponseEntity.ok(mapOf("text" to result.text, "metadata" to result.metadata, "preview" to result.preview) + meta)
         } catch (e: Exception) {
-            ResponseEntity.ok(mapOf("text" to file.toFile().readText(), "preview" to name))
+            ResponseEntity.ok(mapOf("text" to file.toFile().readText(), "preview" to name) + meta)
         }
     }
 
     // Query
     @PostMapping("/query")
-    fun query(@RequestBody req: QueryRequest) = query.query(req.question, req.tags, req.category)
+    fun query(@RequestBody req: QueryRequest) = query.query(req.question, req.tags)
 
     @PostMapping("/query/file-back")
     fun fileBack(@RequestBody req: FileBackRequest): ResponseEntity<Void> {

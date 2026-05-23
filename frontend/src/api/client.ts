@@ -1,4 +1,4 @@
-import type { WikiPage, SourceFile, IngestPreview, QueryResponse, LintIssue, IngestStatus, SourceData } from '../types'
+import type { WikiPage, SourceFile, QueryResponse, LintIssue, IngestStatus, SourceData } from '../types'
 
 const BASE = '/api'
 
@@ -35,7 +35,7 @@ export const api = {
   },
   sources: {
     list: () => get<SourceFile[]>('/sources'),
-    upload: async (file: File, overwrite = false): Promise<IngestPreview | { duplicate: true; fileName: string }> => {
+    upload: async (file: File, overwrite = false): Promise<{ fileName: string } | { duplicate: true; fileName: string }> => {
       const fd = new FormData()
       fd.append('file', file)
       const res = await fetch(`${BASE}/sources/upload?overwrite=${overwrite}`, { method: 'POST', body: fd })
@@ -46,19 +46,19 @@ export const api = {
       if (!res.ok) throw new Error(`Upload failed: ${res.status}`)
       return res.json()
     },
-    confirm: (fileName: string, tags: string[], category: string) =>
-      fetch(`${BASE}/sources/confirm`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileName, tags, category }),
-      }),
     pollStatus: (fileName: string) => get<IngestStatus>(`/sources/${fileName}/status`),
     getData: (name: string) => get<SourceData>(`/sources/${name}/data`),
   },
-  query: (question: string, tags: string[] = [], category?: string) =>
-    post<QueryResponse>('/query', { question, tags, category }),
-  fileBack: (pageName: string, content: string) =>
-    post<void>('/query/file-back', { pageName, content }),
+  query: (question: string, tags: string[] = []) =>
+    post<QueryResponse>('/query', { question, tags }),
+  fileBack: async (pageName: string, content: string): Promise<void> => {
+    const res = await fetch(`${BASE}/query/file-back`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pageName, content }),
+    })
+    if (!res.ok) throw new Error(`fileBack failed: ${res.status}`)
+  },
   lint: () => post<LintIssue[]>('/lint'),
   wipe: () => fetch(`${BASE}/wipe`, { method: 'POST' }),
 }

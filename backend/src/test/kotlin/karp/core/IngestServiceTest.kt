@@ -16,26 +16,7 @@ class IngestServiceTest {
     private val embedding = mock<EmbeddingService>()
 
     @Test
-    fun `previewUploaded reads file and returns tag suggestion`(@TempDir sourcesDir: Path) {
-        val file = sourcesDir.resolve("test.json")
-        file.toFile().writeText("{}")
-
-        val readResult = ReadResult("text", emptyMap(), "preview")
-        val tagSuggestion = TagSuggestion("Tech", listOf("api", "json"))
-
-        whenever(registry.read(any())).thenReturn(readResult)
-        whenever(llm.suggestTagsAndCategory(readResult)).thenReturn(tagSuggestion)
-
-        val svc = IngestService(sourcesDir, registry, wiki, llm, embedding)
-        val preview = svc.previewUploaded(file)
-
-        assertEquals("Tech", preview.suggestedCategory)
-        assertEquals(listOf("api", "json"), preview.suggestedTags)
-        verify(registry).read(any())
-    }
-
-    @Test
-    fun `confirm enqueues job and status becomes PENDING`(@TempDir sourcesDir: Path) {
+    fun `ingest enqueues job and status becomes PENDING`(@TempDir sourcesDir: Path) {
         val file = sourcesDir.resolve("test.json")
         file.toFile().writeText("{}")
 
@@ -43,7 +24,7 @@ class IngestServiceTest {
         whenever(registry.read(any())).thenReturn(readResult)
 
         val svc = IngestService(sourcesDir, registry, wiki, llm, embedding)
-        svc.confirm("test.json", listOf("api"), "Tech")
+        svc.ingest(file)
 
         val status = svc.getStatus("test.json")
         assertEquals(IngestStatus.PENDING, status)

@@ -5,5 +5,5 @@ data class ReadResult(
     val metadata: Map<String, Any>,
     val preview: String,
     var suggestedTags: List<String> = emptyList(),
-    var suggestedCategory: String = ""
+    var suggestedCategory: String = "",
 )

@@ -8,7 +8,14 @@ interface Message {
   response?: QueryResponse
 }
 
-export default function RightPanel() {
+interface Props {
+  allTags: string[]
+  selectedTags: string[]
+  onTagToggle: (tag: string) => void
+  onRefresh: () => void
+}
+
+export default function RightPanel({ allTags, selectedTags, onTagToggle, onRefresh }: Props) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -33,8 +40,8 @@ export default function RightPanel() {
   const fileBack = async (text: string) => {
     const name = fileBackName.trim() || 'query-answer'
     await api.fileBack(name, text)
-    alert(`Filed to wiki: ${name}`)
     setFileBackName('')
+    onRefresh()
   }
 
   const panelStyle: React.CSSProperties = {
@@ -44,6 +51,28 @@ export default function RightPanel() {
 
   return (
     <div style={panelStyle}>
+      {allTags.length > 0 && (
+        <div style={{ padding: '8px 10px', borderBottom: '1px solid #eee', display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+          {allTags.map(tag => {
+            const active = selectedTags.includes(tag)
+            return (
+              <span
+                key={tag}
+                onClick={() => onTagToggle(tag)}
+                style={{
+                  cursor: 'pointer', fontSize: 11, padding: '2px 8px', borderRadius: 12,
+                  background: active ? '#1a73e8' : '#f1f3f4',
+                  color: active ? '#fff' : '#555',
+                  border: `1px solid ${active ? '#1a73e8' : '#ddd'}`,
+                  userSelect: 'none',
+                }}
+              >
+                {tag}
+              </span>
+            )
+          })}
+        </div>
+      )}
       <div style={{ padding: '10px 12px', borderBottom: '1px solid #ddd', fontWeight: 700, fontSize: 13 }}>
         Chat
       </div>

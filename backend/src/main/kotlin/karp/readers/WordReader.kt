@@ -6,7 +6,6 @@ import java.nio.file.Path
 
 @Component
 class WordReader : BaseReader {
-
     override val extensions = listOf(".docx")
 
     override fun read(path: Path): ReadResult {
@@ -21,7 +20,7 @@ class WordReader : BaseReader {
         return ReadResult(
             text = text,
             metadata = mapOf("fileName" to path.fileName.toString(), "wordCount" to wordCount),
-            preview = "Word document, ~$wordCount words. First 200 chars: ${text.take(200)}"
+            preview = "Word document, ~$wordCount words. First 200 chars: ${text.take(200)}",
         )
     }
 }

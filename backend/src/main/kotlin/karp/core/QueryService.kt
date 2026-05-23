@@ -10,8 +10,8 @@ class QueryService(
     private val llm: LlmService,
     private val props: KarpProperties
 ) {
-    fun query(question: String, tags: List<String> = emptyList(), category: String? = null): QueryAnswer {
-        val results = embedding.search(question, props.topK, tags, category)
+    fun query(question: String, tags: List<String> = emptyList()): QueryAnswer {
+        val results = embedding.search(question, props.topK, tags)
         val pages = results
             .mapNotNull { r -> wiki.readPage(r.pageName)?.let { r.pageName to it } }
             .toMap()
@@ -20,7 +20,7 @@ class QueryService(
 
     fun fileBack(pageName: String, content: String) {
         wiki.writePage(pageName, content)
-        embedding.upsertPage(pageName, content, emptyList(), "")
+        embedding.upsertPage(pageName, content, emptyList())
         wiki.appendToLog("FILE_BACK page=$pageName")
     }
 }
