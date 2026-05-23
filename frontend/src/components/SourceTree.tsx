@@ -158,8 +158,8 @@ export default function SourceTree({ serverSources, refreshKey, selection, onSel
           style={{
             paddingLeft: indent + 16, paddingRight: 8, paddingTop: 3, paddingBottom: 3,
             cursor: 'pointer', userSelect: 'none',
-            background: active ? '#e8f0fe' : 'transparent',
-            color: active ? '#1a73e8' : '#333',
+            background: active ? 'var(--color-selected-bg)' : 'transparent',
+            color: active ? 'var(--color-selected-text)' : 'var(--color-text)',
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 13,
           }}
         >
@@ -189,14 +189,14 @@ export default function SourceTree({ serverSources, refreshKey, selection, onSel
           style={{
             paddingLeft: indent, paddingRight: 8, paddingTop: 3, paddingBottom: 3,
             cursor: 'pointer', userSelect: 'none',
-            background: selected ? '#e8f0fe' : dragOver ? '#f0f4ff' : 'transparent',
-            color: selected ? '#1a73e8' : '#333',
+            background: selected ? 'var(--color-selected-bg)' : dragOver ? 'var(--color-drag-bg)' : 'transparent',
+            color: selected ? 'var(--color-selected-text)' : 'var(--color-text)',
             display: 'flex', alignItems: 'center', gap: 4, fontSize: 13,
           }}
         >
           <span
             onClick={e => { e.stopPropagation(); toggle(id) }}
-            style={{ fontSize: 9, color: '#999', minWidth: 10, lineHeight: 1 }}
+            style={{ fontSize: 9, color: 'var(--color-text-faint)', minWidth: 10, lineHeight: 1 }}
           >{fn.collapsed ? '▶' : '▼'}</span>
           <span>📁</span>
           {editingId === id ? (
@@ -207,7 +207,7 @@ export default function SourceTree({ serverSources, refreshKey, selection, onSel
               onBlur={() => commitRename(id)}
               onKeyDown={e => { if (e.key === 'Enter') commitRename(id); if (e.key === 'Escape') setEditingId(null) }}
               onClick={e => e.stopPropagation()}
-              style={{ fontSize: 12, border: '1px solid #aaa', borderRadius: 3, padding: '1px 4px', width: 90, outline: 'none' }}
+              style={{ fontSize: 12, border: '1px solid var(--color-border)', borderRadius: 3, padding: '1px 4px', width: 90, outline: 'none', background: 'var(--color-surface)', color: 'var(--color-text)' }}
             />
           ) : (
             <span style={{ flex: 1 }}>{fn.name}</span>
@@ -216,7 +216,7 @@ export default function SourceTree({ serverSources, refreshKey, selection, onSel
             <span
               title="Add subfolder"
               onClick={e => { e.stopPropagation(); addFolder(id) }}
-              style={{ fontSize: 11, color: '#888', padding: '0 2px', borderRadius: 3 }}
+              style={{ fontSize: 11, color: 'var(--color-text-faint)', padding: '0 2px', borderRadius: 3 }}
             >＋</span>
           )}
         </div>
@@ -230,7 +230,7 @@ export default function SourceTree({ serverSources, refreshKey, selection, onSel
       onDragOver={e => { if (!dragId) return; e.preventDefault(); setDropTarget('__root__') }}
       onDragLeave={() => setDropTarget(null)}
       onDrop={e => drop(e, null)}
-      style={{ minHeight: 8, background: dropTarget === '__root__' ? '#f0f4ff' : 'transparent' }}
+      style={{ minHeight: 8, background: dropTarget === '__root__' ? 'var(--color-drag-bg)' : 'transparent' }}
     >
       {tree.root.map(id => renderNode(id, 0))}
     </div>
