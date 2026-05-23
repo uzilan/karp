@@ -10,16 +10,28 @@ export type Selection =
   | { type: 'source'; name: string }
   | null
 
+function getInitialTheme(): boolean {
+  const stored = localStorage.getItem('karp-dark-mode')
+  if (stored !== null) return stored === 'true'
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+}
+
 export default function App() {
   const [selection, setSelection] = useState<Selection>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [sources, setSources] = useState<SourceFile[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [isDark, setIsDark] = useState(getInitialTheme)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     api.sources.list().then(setSources).catch(() => {})
   }, [refreshKey])
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = isDark ? 'dark' : 'light'
+    localStorage.setItem('karp-dark-mode', String(isDark))
+  }, [isDark])
 
   const allTags = Array.from(new Set(sources.flatMap(s => s.tags ?? []))).sort()
 
@@ -58,8 +70,15 @@ export default function App() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'system-ui, sans-serif' }}>
-      <header style={{ padding: '8px 16px', borderBottom: '1px solid #ddd', display: 'flex', alignItems: 'center', gap: 16, background: '#fff' }}>
+      <header style={{ padding: '8px 16px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--color-surface)' }}>
         <strong style={{ fontSize: 15 }}>Karp Wiki</strong>
+        <button
+          onClick={() => setIsDark(d => !d)}
+          style={{ marginLeft: 'auto', cursor: 'pointer', fontSize: 16, background: 'none', border: 'none', padding: '0 4px' }}
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDark ? '☀️' : '🌙'}
+        </button>
         <button
           onClick={async () => {
             if (window.confirm('Wipe all data? This cannot be undone.')) {
@@ -68,7 +87,7 @@ export default function App() {
               setRefreshKey(k => k + 1)
             }
           }}
-          style={{ color: 'red', marginLeft: 'auto', cursor: 'pointer' }}
+          style={{ color: 'red', cursor: 'pointer' }}
         >
           Wipe Data
         </button>
