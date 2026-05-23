@@ -35,10 +35,15 @@ class ClusterService(
                 val grouped = (0 until k).associateWith { c ->
                     all.indices.filter { assignments[it] == c }.map { all[it].first }
                 }.filter { it.value.isNotEmpty() }
-                val named = grouped.entries.mapIndexed { i, (_, pages) ->
-                    val name = try { llm.nameCluster(pages) } catch (e: Exception) { "Cluster ${i + 1}" }
-                    name to pages
-                }.toMap()
+                val nameCount = mutableMapOf<String, Int>()
+                val named = mutableMapOf<String, List<String>>()
+                grouped.entries.forEachIndexed { i, (_, pages) ->
+                    val rawName = try { llm.nameCluster(pages) } catch (e: Exception) { "Cluster ${i + 1}" }
+                    val count = nameCount.getOrDefault(rawName, 0)
+                    nameCount[rawName] = count + 1
+                    val uniqueName = if (count == 0) rawName else "$rawName ${count + 1}"
+                    named[uniqueName] = pages
+                }
                 cache.set(named)
             } catch (e: Exception) {
                 log.warn("Clustering failed: ${e.message}")
