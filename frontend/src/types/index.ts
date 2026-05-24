@@ -1,6 +1,7 @@
 export interface WikiPage {
   name: string
   content: string
+  source?: string
 }
 
 export interface SourceFile {

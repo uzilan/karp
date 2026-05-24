@@ -29,9 +29,10 @@ export default function CenterPanel({ selection, refreshKey }: Props) {
   const [loading, setLoading] = useState(false)
   const [title, setTitle] = useState('')
   const [tags, setTags] = useState<string[]>([])
+  const [sourceFile, setSourceFile] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!selection) { setContent(null); setTitle(''); setTags([]); return }
+    if (!selection) { setContent(null); setTitle(''); setTags([]); setSourceFile(null); return }
     setLoading(true)
     const load = async () => {
       try {
@@ -40,11 +41,13 @@ export default function CenterPanel({ selection, refreshKey }: Props) {
           setContent(page.content)
           setTitle(selection.name)
           setTags([])
+          setSourceFile(page.source ?? null)
         } else {
           const data = await api.sources.getData(selection.name)
           setContent(data.text)
           setTitle(selection.name)
           setTags(data.tags ?? [])
+          setSourceFile(selection.name)
         }
       } catch {
         setContent('Failed to load content.')
@@ -75,7 +78,20 @@ export default function CenterPanel({ selection, refreshKey }: Props) {
   return (
     <div style={outerStyle}>
       <div style={{ padding: '8px 24px', borderBottom: '1px solid var(--color-border)', fontSize: 12, color: 'var(--color-text-faint)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span>{title}</span>
+        {sourceFile ? (
+          <a
+            href={`/api/sources/${encodeURIComponent(sourceFile)}/raw`}
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: 'inherit', textDecoration: 'none' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = 'underline' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = 'none' }}
+          >
+            {title}
+          </a>
+        ) : (
+          <span>{title}</span>
+        )}
         {tags.map(tag => (
           <span key={tag} style={{ background: 'var(--color-selected-bg)', color: 'var(--color-selected-text)', borderRadius: 10, padding: '1px 8px' }}>#{tag}</span>
         ))}
