@@ -30,7 +30,6 @@ export default function CenterPanel({ selection, refreshKey }: Props) {
   const [title, setTitle] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [sourceFile, setSourceFile] = useState<string | null>(null)
-  const [titleHovered, setTitleHovered] = useState(false)
 
   useEffect(() => {
     if (!selection) { setContent(null); setTitle(''); setTags([]); setSourceFile(null); return }
@@ -84,9 +83,7 @@ export default function CenterPanel({ selection, refreshKey }: Props) {
             href={`/api/sources/${encodeURIComponent(sourceFile)}/raw`}
             target="_blank"
             rel="noreferrer"
-            style={{ color: 'inherit', textDecoration: titleHovered ? 'underline' : 'none' }}
-            onMouseEnter={() => setTitleHovered(true)}
-            onMouseLeave={() => setTitleHovered(false)}
+            style={{ color: 'var(--color-selected-text)', textDecoration: 'underline' }}
           >
             {title}
           </a>
