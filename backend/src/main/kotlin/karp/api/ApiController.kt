@@ -30,9 +30,12 @@ class ApiController(
     fun getWikiClusters(): Map<String, List<String>> = clusterService.getClusters()
 
     @GetMapping("/wiki/{name}")
-    fun getWikiPage(@PathVariable name: String): ResponseEntity<Map<String, String>> {
+    fun getWikiPage(@PathVariable name: String): ResponseEntity<Map<String, String?>> {
         val content = wiki.readPage(name) ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(mapOf("name" to name, "content" to content))
+        val source = wiki.readPageSource(name)
+        val response = mutableMapOf<String, String?>("name" to name, "content" to content)
+        if (source != null) response["source"] = source
+        return ResponseEntity.ok(response)
     }
 
     @PutMapping("/wiki/{name}")
@@ -79,6 +82,17 @@ class ApiController(
             Files.deleteIfExists(dest)
             ResponseEntity.badRequest().body(mapOf("error" to e.message))
         }
+    }
+
+    @GetMapping("/sources/{name}/raw")
+    fun rawSource(@PathVariable name: String): ResponseEntity<ByteArray> {
+        if (name.contains("..")) return ResponseEntity.badRequest().build()
+        val file = sourcesDir.resolve(name)
+        if (!file.toFile().exists()) return ResponseEntity.notFound().build()
+        val contentType = Files.probeContentType(file) ?: "application/octet-stream"
+        return ResponseEntity.ok()
+            .header("Content-Type", contentType)
+            .body(file.toFile().readBytes())
     }
 
     @GetMapping("/sources/{name}/status")
