@@ -78,7 +78,21 @@ export default function CenterPanel({ selection, refreshKey }: Props) {
   return (
     <div style={outerStyle}>
       <div style={{ padding: '8px 24px', borderBottom: '1px solid var(--color-border)', fontSize: 12, color: 'var(--color-text-faint)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        {sourceFile ? (
+        {selection?.type === 'wiki' ? (
+          <>
+            <span>{title}</span>
+            {sourceFile && (
+              <a
+                href={`/api/sources/${encodeURIComponent(sourceFile)}/raw`}
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: 'var(--color-selected-text)', textDecoration: 'underline' }}
+              >
+                {sourceFile}
+              </a>
+            )}
+          </>
+        ) : sourceFile ? (
           <a
             href={`/api/sources/${encodeURIComponent(sourceFile)}/raw`}
             target="_blank"
