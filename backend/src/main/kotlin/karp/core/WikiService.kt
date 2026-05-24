@@ -49,11 +49,12 @@ class WikiService(
     fun writePageSource(name: String, source: String) {
         val metaDir = wikiDir.resolve(".meta")
         java.nio.file.Files.createDirectories(metaDir)
-        metaDir.resolve("$name.json").toFile().writeText("""{"source":"${source.replace("\"", "\\\"")}"}""")
+        val escaped = source.replace("\\", "\\\\").replace("\"", "\\\"")
+        metaDir.resolve("$name.json").toFile().writeText("""{"source":"$escaped"}""")
     }
 
     fun readPageSource(name: String): String? {
-        val metaFile = wikiDir.resolve(".meta/$name.json").toFile()
+        val metaFile = wikiDir.resolve(".meta").resolve("$name.json").toFile()
         if (!metaFile.exists()) return null
         return try {
             val text = metaFile.readText()
