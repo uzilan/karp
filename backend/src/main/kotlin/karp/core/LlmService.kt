@@ -5,6 +5,10 @@ import org.springframework.stereotype.Service
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.KotlinModule
 import tools.jackson.module.kotlin.readValue
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.nio.file.Path
 
 data class IngestResult(
@@ -42,10 +46,31 @@ class LlmService(
         Path.of("schema.md").let { if (it.toFile().exists()) it.toFile().readText() else "" }
     }
 
+    private val httpClient = HttpClient.newHttpClient()
+
     private fun ask(
         systemPrompt: String,
         userMessage: String,
     ): String {
+        val proxyUrl = System.getenv("CLAUDE_PROXY_URL")
+        return if (proxyUrl != null) askViaProxy(proxyUrl, systemPrompt, userMessage) else askViaCli(systemPrompt, userMessage)
+    }
+
+    private fun askViaProxy(proxyUrl: String, systemPrompt: String, userMessage: String): String {
+        val body = mapper.writeValueAsString(mapOf("systemPrompt" to systemPrompt, "userMessage" to userMessage))
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create("$proxyUrl/ask"))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(body))
+            .build()
+        val response = httpClient.send(request, HttpResponse.BodyHandlers.ofString())
+        if (response.statusCode() != 200) throw RuntimeException("Proxy error ${response.statusCode()}: ${response.body()}")
+        val output = response.body().trim()
+        if (output.isBlank()) throw RuntimeException("Empty response from proxy")
+        return output
+    }
+
+    private fun askViaCli(systemPrompt: String, userMessage: String): String {
         val process =
             ProcessBuilder(
                 "claude",
@@ -54,9 +79,14 @@ class LlmService(
                 "--system-prompt",
                 systemPrompt,
                 "--dangerously-skip-permissions",
-            ).start()
+            ).redirectInput(ProcessBuilder.Redirect.from(java.io.File("/dev/null")))
+                .start()
         val output = process.inputStream.bufferedReader().readText()
-        process.waitFor()
+        val stderr = process.errorStream.bufferedReader().readText()
+        val exitCode = process.waitFor()
+        if (exitCode != 0 || output.isBlank()) {
+            throw RuntimeException("claude exited $exitCode. stderr: $stderr")
+        }
         return output.trim()
     }
 

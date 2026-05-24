@@ -5,14 +5,24 @@ LLM-maintained personal knowledge base. Drop files in, Claude builds a structure
 ## Prerequisites
 
 - Docker Desktop
-- Anthropic API key (console.anthropic.com/settings/keys)
+- Claude Code CLI installed and logged in (`claude` in your PATH)
 
 ## Getting Started
 
 1. Clone this repo
-2. Copy `.env.example` to `.env` and fill in your API key
-3. Run: `docker compose up -d`
-4. Open: http://localhost:8080
+2. Start the Claude proxy (keeps running in background):
+   ```bash
+   node claude-proxy.js
+   ```
+3. Run Docker:
+   ```bash
+   docker compose up -d
+   ```
+4. Open: http://localhost:7777
+
+## How It Works
+
+The app shells out to your local `claude` CLI for LLM operations (ingest, query, lint). The proxy at port 8765 bridges Docker to your local Claude session — no API key required.
 
 ## Adding Files
 
@@ -29,7 +39,7 @@ Add to `~/.claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "karp": {
-      "url": "http://localhost:8080/mcp/sse"
+      "url": "http://localhost:7777/mcp/sse"
     }
   }
 }
@@ -40,7 +50,7 @@ Restart Claude Desktop. You can now ask Claude about your wiki directly.
 ## Transferring to Another Machine
 
 1. `zip -r karp-data.zip data/`
-2. Copy to new machine alongside `docker-compose.yml` and `.env`
-3. `docker compose up -d`
+2. Copy to new machine alongside `docker-compose.yml`
+3. Start the proxy and run `docker compose up -d`
 
 All sources, wiki pages, and vector index are intact.

@@ -22,5 +22,5 @@ FROM eclipse-temurin:25-jre-noble
 WORKDIR /app
 COPY --from=backend-build /backend/build/libs/*.jar app.jar
 RUN mkdir -p /app/sources/errors /app/wiki
-EXPOSE 8080
+EXPOSE 7777
 ENTRYPOINT ["java", "-jar", "app.jar"]

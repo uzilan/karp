@@ -3,12 +3,12 @@ services:
     build: .
     ports:
       - "7777:7777"
-    env_file: .env
     environment:
       KARP_SOURCES_DIR: /app/sources
       KARP_WIKI_DIR: /app/wiki
       QDRANT_HOST: qdrant
       QDRANT_PORT: "6334"
+      CLAUDE_PROXY_URL: http://host.docker.internal:8765
     volumes:
       - ./data/sources:/app/sources
       - ./data/wiki:/app/wiki
