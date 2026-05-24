@@ -45,4 +45,20 @@ class WikiService(
     }
 
     fun allPagesContent(): Map<String, String> = listPages().associateWith { readPage(it) ?: "" }
+
+    fun writePageSource(name: String, source: String) {
+        val metaDir = wikiDir.resolve(".meta")
+        java.nio.file.Files.createDirectories(metaDir)
+        metaDir.resolve("$name.json").toFile().writeText("""{"source":"$source"}""")
+    }
+
+    fun readPageSource(name: String): String? {
+        val metaFile = wikiDir.resolve(".meta/$name.json").toFile()
+        if (!metaFile.exists()) return null
+        return try {
+            val text = metaFile.readText()
+            val match = Regex(""""source"\s*:\s*"([^"]+)"""").find(text)
+            match?.groupValues?.get(1)
+        } catch (_: Exception) { null }
+    }
 }

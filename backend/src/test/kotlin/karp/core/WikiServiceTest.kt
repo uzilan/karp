@@ -52,4 +52,17 @@ class WikiServiceTest {
         assertEquals(2, all.size)
         assertEquals("content a", all["a"])
     }
+
+    @Test
+    fun `writePageSource and readPageSource round-trip`(@TempDir dir: Path) {
+        val svc = WikiService(dir, mock())
+        svc.writePageSource("finance", "report.pdf")
+        assertEquals("report.pdf", svc.readPageSource("finance"))
+    }
+
+    @Test
+    fun `readPageSource returns null when no meta file`(@TempDir dir: Path) {
+        val svc = WikiService(dir, mock())
+        assertNull(svc.readPageSource("nonexistent"))
+    }
 }
