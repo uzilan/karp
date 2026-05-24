@@ -50,6 +50,7 @@ class IngestService(
                 val ingestResult = llm.ingestDocument(job.readResult)
                 ingestResult.pages.forEach { update ->
                     wiki.writePage(update.name, update.content)
+                    wiki.writePageSource(update.name, job.fileName)
                     embedding.upsertPage(update.name, update.content, ingestResult.tags)
                 }
                 val metaDir = sourcesDir.resolve(".meta")

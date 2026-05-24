@@ -30,4 +30,24 @@ class IngestServiceTest {
         val status = svc.getStatus("test.json")
         assertEquals(IngestStatus.PENDING, status)
     }
+
+    @Test
+    fun `ingest writes source metadata for each wiki page`(@TempDir sourcesDir: Path) {
+        val file = sourcesDir.resolve("report.pdf")
+        file.toFile().writeText("content")
+
+        val readResult = ReadResult("text", emptyMap(), "preview")
+        val pages = listOf(WikiPageUpdate("finance", "# Finance"), WikiPageUpdate("index", "# Index"))
+        whenever(registry.read(any())).thenReturn(readResult)
+        whenever(llm.ingestDocument(any())).thenReturn(IngestResult(listOf("finance"), pages))
+
+        val svc = IngestService(sourcesDir, registry, wiki, llm, embedding)
+        svc.ingest(file)
+
+        // allow background worker to finish
+        Thread.sleep(500)
+
+        verify(wiki).writePageSource("finance", "report.pdf")
+        verify(wiki).writePageSource("index", "report.pdf")
+    }
 }
