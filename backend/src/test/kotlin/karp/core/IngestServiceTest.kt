@@ -29,6 +29,13 @@ class IngestServiceTest {
 
         val status = svc.getStatus("test.json")
         assertEquals(IngestStatus.PENDING, status)
+
+        // wait for worker to finish before @TempDir cleanup to avoid DirectoryNotEmptyException
+        val deadline = System.currentTimeMillis() + 2000
+        while (svc.getStatus("test.json").let { it == IngestStatus.PENDING || it == IngestStatus.PROCESSING }) {
+            if (System.currentTimeMillis() > deadline) break
+            Thread.sleep(10)
+        }
     }
 
     @Test
